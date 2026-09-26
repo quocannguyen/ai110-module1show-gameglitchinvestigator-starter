@@ -45,6 +45,21 @@ def test_new_game_resets_attempts_and_status():
     assert at.session_state.attempts == 0
 
 
+def test_guess_input_and_submit_share_a_form():
+    # Regression for the "Submit doesn't register on the first click" bug:
+    # the guess text_input and its submit button must live in the same
+    # st.form so the browser sends both in one atomic message instead of
+    # racing the text_input's blur-triggered value sync against the
+    # button's click-triggered rerun.
+    at = make_app()
+
+    guess_input = at.text_input[0]
+    submit_button = next(b for b in at.button if b.proto.is_form_submitter)
+
+    assert guess_input.proto.form_id != ""
+    assert guess_input.proto.form_id == submit_button.proto.form_id
+
+
 def test_correct_guess_wins_on_both_odd_and_even_attempt_numbers():
     # Regression for 96e670d + fc408b2: secret used to flip between int
     # and str depending on attempts parity, which crashed check_guess's
