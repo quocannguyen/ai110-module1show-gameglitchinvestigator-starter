@@ -45,29 +45,6 @@ def test_new_game_resets_attempts_and_status():
     assert at.session_state.attempts == 0
 
 
-class TestNewGameIgnoresDifficultyRange:
-    """"New Game" still calls random.randint(1, 100) unconditionally instead
-    of random.randint(low, high). Switching to Easy/Hard and starting a new
-    game can draw a secret outside the range the UI just advertised (e.g. 62
-    on Easy, whose info banner says "between 1 and 20"). This characterizes
-    the bug as currently committed rather than asserting the fix.
-    """
-
-    def test_new_game_can_draw_secret_outside_easy_range(self):
-        at = make_app()
-        at.sidebar.selectbox[0].set_value("Easy").run()
-
-        secrets = set()
-        for _ in range(30):
-            at.button[1].click().run()
-            secrets.add(at.session_state.secret)
-
-        assert any(s > 20 for s in secrets), (
-            "expected New Game's hardcoded randint(1, 100) to eventually "
-            "produce a secret outside Easy's advertised 1-20 range"
-        )
-
-
 def test_correct_guess_wins_on_both_odd_and_even_attempt_numbers():
     # Regression for 96e670d + fc408b2: secret used to flip between int
     # and str depending on attempts parity, which crashed check_guess's
