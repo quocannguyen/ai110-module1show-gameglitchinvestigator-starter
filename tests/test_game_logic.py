@@ -17,6 +17,21 @@ def test_guess_too_low():
     result, _ = check_guess(40, 50)
     assert result == "Too Low"
 
+def test_winning_guess_message():
+    # A correct guess should return the celebratory win message
+    _, message = check_guess(50, 50)
+    assert message == "🎉 Correct!"
+
+def test_guess_too_high_message():
+    # A guess above the secret should return the "go lower" message
+    _, message = check_guess(60, 50)
+    assert message == "📉 Go LOWER!"
+
+def test_guess_too_low_message():
+    # A guess below the secret should return the "go higher" message
+    _, message = check_guess(40, 50)
+    assert message == "📈 Go HIGHER!"
+
 class TestCheckGuessTypeError:
     """check_guess's TypeError fallback assumes int(guess)/int(secret) can't fail.
 
