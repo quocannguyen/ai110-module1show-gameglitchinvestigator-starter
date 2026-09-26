@@ -82,6 +82,22 @@ def test_guess_input_and_submit_share_a_form():
     assert guess_input.proto.form_id == submit_button.proto.form_id
 
 
+def test_attempts_left_banner_updates_on_the_submitting_run():
+    # Regression: the "Attempts left" banner used to be rendered before
+    # the submit handler incremented st.session_state.attempts, so it
+    # lagged one guess behind until the next rerun. It must reflect the
+    # decrement in the same run as the guess that caused it.
+    at = make_app()
+    secret = at.session_state.secret
+    wrong = opposite_guess(secret, 1, 100)
+
+    at.text_input[0].set_value(str(wrong))
+    at.button[0].click().run()
+
+    assert at.session_state.attempts == 1
+    assert "Attempts left: 7" in at.info[0].value
+
+
 def test_correct_guess_wins_on_both_odd_and_even_attempt_numbers():
     # Regression for 96e670d + fc408b2: secret used to flip between int
     # and str depending on attempts parity, which crashed check_guess's
