@@ -45,6 +45,28 @@ def test_new_game_resets_attempts_and_status():
     assert at.session_state.attempts == 0
 
 
+def test_new_game_resets_status_from_lost_to_playing():
+    # Regression for 30b5c7c: New Game must reset status back to "playing"
+    # even when the previous game ended in "lost" (or "won"), otherwise the
+    # status != "playing" guard keeps blocking play with the old game-over
+    # message after starting a new game.
+    at = make_app()
+    at.sidebar.selectbox[0].set_value("Hard").run()  # attempt_limit = 5
+    secret = at.session_state.secret
+    wrong = opposite_guess(secret, 1, 50)
+
+    for _ in range(5):
+        at.text_input[0].set_value(str(wrong))
+        at.button[0].click().run()
+
+    assert at.session_state.status == "lost"
+
+    at.button[1].click().run()  # "New Game" button
+
+    assert at.session_state.status == "playing"
+    assert not at.exception
+
+
 def test_guess_input_and_submit_share_a_form():
     # Regression for the "Submit doesn't register on the first click" bug:
     # the guess text_input and its submit button must live in the same
