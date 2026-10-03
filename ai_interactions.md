@@ -28,9 +28,10 @@
 
 | Edge Case | Prompt Used | AI-Suggested Test | Did It Pass? | Your Reasoning |
 |-----------|-------------|-------------------|--------------|----------------|
-| | | | | |
-| | | | | |
-| | | | | |
+| Decimal strings truncate instead of round | "identify three potential 'edge case' inputs that might still break the game." → "generate a suite of pytest cases that verify the game handles these inputs gracefully." | `TestParseGuessDecimalTruncation` in `tests/test_game_logic.py`: asserts `"2.9"` parses to `2`, `"-0.5"` parses to `0`, etc. | Yes | `parse_guess` does `int(float(raw))`, which truncates toward zero rather than rounding — a player typing `2.9` expecting it to round to `3` gets silently misparsed to `2`. |
+| Whitespace/sign-prefixed numbers | Same prompts as above | `TestParseGuessWhitespaceAndSigns`: asserts `" 5 "`, `"+5"`, `"05"`, `"-5"` all parse successfully to their numeric value | Yes | `int()` natively tolerates these forms, so the test documents/locks in that normal-looking input isn't incorrectly rejected as invalid. |
+| Malformed numeric strings (thousands separators, scientific notation, `inf`/`nan`) | Same prompts as above | `TestParseGuessMalformedNumbers`: asserts `"1,000"`, `"1e2"`, `"--5"`, `"inf"`, `"nan"`, etc. return `ok=False` with the friendly `"That is not a number."` message instead of raising | Yes | These look numeric to a user but aren't handled by `parse_guess`'s simple `int`/`float` logic, so the test guards against an uncaught exception crashing the app on input like this. |
+| Guesses far outside the difficulty's valid range | Same prompts as above | `TestParseGuessOutOfDifficultyRange`: asserts a guess like `high + 999999` or `low - 999999` is still accepted as `ok=True` by `parse_guess`, and `check_guess` just returns "Too High"/"Too Low" | Yes (documents existing gap, not a crash) | `parse_guess` never checks the parsed value against `get_range_for_difficulty`'s `(low, high)`, so a wildly out-of-range guess wastes an attempt with no helpful validation message — this test exists to flag that known limitation rather than hide it. |
 
 ---
 

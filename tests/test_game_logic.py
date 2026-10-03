@@ -1,6 +1,12 @@
 import pytest
 
-from logic_utils import check_guess, load_high_score, save_high_score
+from logic_utils import (
+    check_guess,
+    get_range_for_difficulty,
+    load_high_score,
+    parse_guess,
+    save_high_score,
+)
 
 def test_winning_guess():
     # If the secret is 50 and guess is 50, it should be a win
@@ -54,6 +60,98 @@ class TestCheckGuessTypeError:
     def test_uncastable_guess_type_raises_typeerror(self, guess):
         with pytest.raises(TypeError):
             check_guess(guess, 50)
+
+
+class TestParseGuessDecimalTruncation:
+    """parse_guess does int(float(raw)) for any string containing '.', which
+    truncates toward zero instead of rounding -- "2.9" silently becomes 2.
+    """
+
+    @pytest.mark.parametrize(
+        "raw, expected",
+        [
+            ("1.9", 1),
+            ("2.9", 2),
+            ("-0.5", 0),
+            ("-1.9", -1),
+        ],
+    )
+    def test_decimal_strings_truncate_instead_of_round(self, raw, expected):
+        ok, guess_int, err = parse_guess(raw)
+        assert ok is True
+        assert err is None
+        assert guess_int == expected
+
+
+class TestParseGuessWhitespaceAndSigns:
+    """int() tolerates surrounding whitespace and a leading '+', so these
+    should parse cleanly rather than being rejected as invalid input.
+    """
+
+    @pytest.mark.parametrize(
+        "raw, expected",
+        [
+            (" 5 ", 5),
+            ("+5", 5),
+            ("05", 5),
+            ("-5", -5),
+        ],
+    )
+    def test_whitespace_and_sign_variants_parse_successfully(self, raw, expected):
+        ok, guess_int, err = parse_guess(raw)
+        assert ok is True
+        assert err is None
+        assert guess_int == expected
+
+
+class TestParseGuessMalformedNumbers:
+    """Thousands separators and scientific notation should be rejected with
+    the friendly error message rather than raising an uncaught exception.
+    """
+
+    @pytest.mark.parametrize("raw", ["1,000", "1e2", "--5", "5-", "inf", "nan"])
+    def test_malformed_numeric_strings_are_rejected_gracefully(self, raw):
+        ok, guess_int, err = parse_guess(raw)
+        assert ok is False
+        assert guess_int is None
+        assert err == "That is not a number."
+
+    @pytest.mark.parametrize("raw", ["abc", "!!!", "五", None, ""])
+    def test_non_numeric_input_is_rejected_gracefully(self, raw):
+        ok, guess_int, err = parse_guess(raw)
+        assert ok is False
+        assert guess_int is None
+        assert err is not None
+
+
+class TestParseGuessOutOfDifficultyRange:
+    """parse_guess never validates the parsed value against the active
+    difficulty's (low, high) range, so wildly out-of-range guesses are
+    accepted as 'ok' and silently compared via check_guess instead of
+    surfacing a helpful validation error.
+    """
+
+    @pytest.mark.parametrize("difficulty", ["Easy", "Normal", "Hard"])
+    def test_guess_far_above_range_is_still_parsed_as_ok(self, difficulty):
+        _, high = get_range_for_difficulty(difficulty)
+        ok, guess_int, err = parse_guess(str(high + 999999))
+        assert ok is True
+        assert err is None
+        assert guess_int == high + 999999
+
+    @pytest.mark.parametrize("difficulty", ["Easy", "Normal", "Hard"])
+    def test_guess_far_below_range_is_still_parsed_as_ok(self, difficulty):
+        low, _ = get_range_for_difficulty(difficulty)
+        ok, guess_int, err = parse_guess(str(low - 999999))
+        assert ok is True
+        assert err is None
+        assert guess_int == low - 999999
+
+    def test_out_of_range_guess_still_resolves_to_a_hint_not_an_error(self):
+        # Documents current behavior: an out-of-range guess gets "Too High"/
+        # "Too Low" like any other wrong guess, with no range-aware message.
+        outcome, _ = check_guess(999999, 50)
+        assert outcome == "Too High"
 
 
 class TestHighScorePersistence:
