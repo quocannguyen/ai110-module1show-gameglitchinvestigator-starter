@@ -52,18 +52,23 @@
 **Prompt used:**
 
 ```
-<!-- Paste the prompt you gave the AI -->
+add professional-grade docstrings to every function in logic_utils.py
+```
+```
+Review code for PEP 8 style compliance
 ```
 
 **Linting output before:**
 
+The AI ran `pip install -q flake8` then `python -m flake8 --max-line-length=79 logic_utils.py` against the file (after docstrings were added). Output:
+
 ```
-<!-- Paste relevant linter warnings/errors -->
+(no output — flake8 exited clean, zero violations)
 ```
 
 **Changes applied:**
 
-<!-- Describe what you changed based on the AI's suggestions -->
+No changes were needed — the file already complied with PEP 8 (4-space indentation, `snake_case` function/variable names, two blank lines between top-level functions, and all lines, including the new docstrings, under the 79-character limit) under the `--max-line-length=79` check. The AI's review covered naming conventions, indentation, and blank-line spacing and confirmed all were already correct, so the only prior step applied was adding structured docstrings (Args/Returns/Examples/Raises) to every function in `logic_utils.py`, which did not require any style fixes afterward.
 
 ---
 
