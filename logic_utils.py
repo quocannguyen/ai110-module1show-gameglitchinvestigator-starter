@@ -46,6 +46,21 @@ def check_guess(guess, secret):
     return "Too Low", "📈 Go HIGHER!"
 
 
+def load_high_score(path: str = "high_score.txt") -> int:
+    """Read the persisted high score from path. Return 0 if missing or invalid."""
+    try:
+        with open(path, "r") as f:
+            return int(f.read().strip())
+    except (OSError, ValueError):
+        return 0
+
+
+def save_high_score(score: int, path: str = "high_score.txt") -> None:
+    """Persist the high score to path, overwriting any existing value."""
+    with open(path, "w") as f:
+        f.write(str(score))
+
+
 def update_score(current_score: int, outcome: str, attempt_number: int):
     """Update score based on outcome and attempt number."""
     if outcome == "Win":

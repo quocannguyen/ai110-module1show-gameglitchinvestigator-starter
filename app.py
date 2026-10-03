@@ -1,7 +1,14 @@
 import random
 import streamlit as st
 
-from logic_utils import get_range_for_difficulty, parse_guess, check_guess, update_score
+from logic_utils import (
+    get_range_for_difficulty,
+    parse_guess,
+    check_guess,
+    update_score,
+    load_high_score,
+    save_high_score,
+)
 
 st.set_page_config(page_title="Glitchy Guesser", page_icon="🎮")
 
@@ -37,6 +44,11 @@ if "attempts" not in st.session_state:
 if "score" not in st.session_state:
     st.session_state.score = 0
 
+if "high_score" not in st.session_state:
+    st.session_state.high_score = load_high_score()
+
+st.sidebar.metric("High Score", st.session_state.high_score)
+
 if "status" not in st.session_state:
     st.session_state.status = "playing"
 
@@ -61,6 +73,7 @@ with st.expander("Developer Debug Info"):
     st.write("Difficulty:", difficulty)
     st.write("History:", st.session_state.history)
 
+# FIX: Put raw_guess and submit in a st.form with agent mode
 with st.form("guess_form"):
     raw_guess = st.text_input(
         "Enter your guess:",
@@ -120,6 +133,11 @@ if submit:
                 f"You won! The secret was {st.session_state.secret}. "
                 f"Final score: {st.session_state.score}"
             )
+
+            if st.session_state.score > st.session_state.high_score:
+                st.session_state.high_score = st.session_state.score
+                save_high_score(st.session_state.high_score)
+                st.success("🏆 New high score!")
         else:
             if st.session_state.attempts >= attempt_limit:
                 st.session_state.status = "lost"

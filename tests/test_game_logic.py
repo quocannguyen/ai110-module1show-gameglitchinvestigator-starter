@@ -1,6 +1,6 @@
 import pytest
 
-from logic_utils import check_guess
+from logic_utils import check_guess, load_high_score, save_high_score
 
 def test_winning_guess():
     # If the secret is 50 and guess is 50, it should be a win
@@ -54,3 +54,25 @@ class TestCheckGuessTypeError:
     def test_uncastable_guess_type_raises_typeerror(self, guess):
         with pytest.raises(TypeError):
             check_guess(guess, 50)
+
+
+class TestHighScorePersistence:
+    def test_load_high_score_returns_zero_when_file_missing(self, tmp_path):
+        path = tmp_path / "high_score.txt"
+        assert load_high_score(str(path)) == 0
+
+    def test_load_high_score_returns_zero_when_file_invalid(self, tmp_path):
+        path = tmp_path / "high_score.txt"
+        path.write_text("not a number")
+        assert load_high_score(str(path)) == 0
+
+    def test_save_then_load_round_trips_value(self, tmp_path):
+        path = tmp_path / "high_score.txt"
+        save_high_score(150, str(path))
+        assert load_high_score(str(path)) == 150
+
+    def test_save_high_score_overwrites_previous_value(self, tmp_path):
+        path = tmp_path / "high_score.txt"
+        save_high_score(100, str(path))
+        save_high_score(200, str(path))
+        assert load_high_score(str(path)) == 200

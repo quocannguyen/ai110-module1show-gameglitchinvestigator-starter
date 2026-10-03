@@ -1,8 +1,19 @@
+import os
+
 from streamlit.testing.v1 import AppTest
+
+APP_PATH = os.path.join(os.path.dirname(__file__), "..", "app.py")
+
+
+def make_app_in_cwd():
+    """Build the AppTest without running it, so the caller can chdir
+    (e.g. to isolate relative file I/O like high_score.txt) before
+    the script actually executes."""
+    return AppTest.from_file(APP_PATH)
 
 
 def make_app():
-    at = AppTest.from_file("app.py")
+    at = make_app_in_cwd()
     at.run()
     return at
 
@@ -116,6 +127,47 @@ def test_correct_guess_wins_on_both_odd_and_even_attempt_numbers():
     assert not at.exception
     assert at.session_state.attempts == 2
     assert at.session_state.status == "won"
+
+
+def test_winning_creates_high_score_file_and_sets_session_state(tmp_path, monkeypatch):
+    at = make_app_in_cwd()
+    monkeypatch.chdir(tmp_path)
+    at.run()
+    secret = at.session_state.secret
+
+    at.text_input[0].set_value(str(secret))
+    at.button[0].click().run()
+
+    assert at.session_state.status == "won"
+    assert at.session_state.high_score == at.session_state.score
+    assert (tmp_path / "high_score.txt").exists()
+    assert int((tmp_path / "high_score.txt").read_text()) == at.session_state.score
+
+
+def test_lower_score_win_does_not_lower_existing_high_score(tmp_path, monkeypatch):
+    at = make_app_in_cwd()
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "high_score.txt").write_text("99999")
+
+    at.run()
+    secret = at.session_state.secret
+    at.text_input[0].set_value(str(secret))
+    at.button[0].click().run()
+
+    assert at.session_state.status == "won"
+    assert at.session_state.high_score == 99999
+    assert int((tmp_path / "high_score.txt").read_text()) == 99999
+
+
+def test_high_score_survives_new_game_reset(tmp_path, monkeypatch):
+    at = make_app_in_cwd()
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "high_score.txt").write_text("42")
+
+    at.run()
+    at.button[1].click().run()  # "New Game" button
+
+    assert at.session_state.high_score == 42
 
 
 def test_out_of_attempts_sets_status_lost():
