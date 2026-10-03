@@ -25,28 +25,44 @@ It wrote the code, ran away, and now the game is unplayable.
 
 ## 📝 Document Your Experience
 
-- [ ] Describe the game's purpose.
+- [x] Describe the game's purpose.
+   - The game generates a secret number and provides hints based on the player's guesses.
 - [ ] Detail which bugs you found.
-- [ ] Explain what fixes you applied.
+- [x] Explain what fixes you applied.
+   - Always parse secret to int
+   - Reverse the hint in check_guess
+   - Use low and high in the info banner
+   - Initialize attempts to 0 instead of 1
+   - Put raw_guess and submit in a st.form
+   - Set status to playing on new_game
+   - Render attempts_left on submit
 
 ## 📸 Demo Walkthrough
 
 Describe your fixed game in numbered steps so a reader can follow along without watching a video:
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+1. User enters a guess of 40
+2. Game returns "Too Low"
+3. User enters a guess of 70, and the game shows "Too High"
+4. Score updates correctly after each guess
+5. Game ends after the correct guess
 
 **Screenshot** *(optional)*: <!-- Insert a screenshot of your fixed, winning game here -->
 
 ## 🧪 Test Results
 
 ```
-# Paste your pytest output here, e.g.:
-# pytest tests/
-# ========================= X passed in 0.XXs =========================
+============================= test session starts =============================
+platform win32 -- Python 3.13.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: [redacted]\ai110-module1show-gameglitchinvestigator-starter
+plugins: anyio-4.15.1
+collected 26 items
+
+tests\test_app.py ...........                                            [ 42%]
+tests\test_game_logic.py ...............                                 [100%]
+
+============================= 26 passed in 7.17s ==============================
+
 ```
 
 ## 🚀 Stretch Features
